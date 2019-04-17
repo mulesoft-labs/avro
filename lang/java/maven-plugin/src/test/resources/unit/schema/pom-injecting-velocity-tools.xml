@@ -19,6 +19,13 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
+  <parent>
+    <artifactId>avro-parent</artifactId>
+    <groupId>org.apache.avro</groupId>
+    <version>1.9.0-MULE_1</version>
+    <relativePath>../../../../../../../../../pom.xml</relativePath>
+  </parent>
+
   <artifactId>avro-maven-plugin-test</artifactId>
   <packaging>jar</packaging>
 
