@@ -7,7 +7,7 @@
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -25,6 +25,7 @@ import java.nio.charset.StandardCharsets;
 import java.io.IOException;
 import java.security.MessageDigest;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -35,6 +36,7 @@ import java.util.Set;
 import java.util.HashSet;
 
 import org.apache.avro.Schema.Field;
+import org.apache.avro.Schema.Field.Order;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
@@ -69,15 +71,11 @@ public class Protocol extends JsonProperties {
   public static final long VERSION = 1;
 
   // Support properties for both Protocol and Message objects
-  private static final Set<String> MESSAGE_RESERVED = new HashSet<>();
-  static {
-    Collections.addAll(MESSAGE_RESERVED, "doc", "response", "request", "errors", "one-way");
-  }
+  private static final Set<String> MESSAGE_RESERVED = Collections
+      .unmodifiableSet(new HashSet<>(Arrays.asList("doc", "response", "request", "errors", "one-way")));
 
-  private static final Set<String> FIELD_RESERVED = new HashSet<>();
-  static {
-    Collections.addAll(FIELD_RESERVED, "name", "type", "doc", "default", "aliases");
-  }
+  private static final Set<String> FIELD_RESERVED = Collections
+      .unmodifiableSet(new HashSet<>(Arrays.asList("name", "type", "doc", "default", "aliases")));
 
   /** A protocol message. */
   public class Message extends JsonProperties {
@@ -263,10 +261,8 @@ public class Protocol extends JsonProperties {
     SYSTEM_ERRORS = Schema.createUnion(errors);
   }
 
-  private static final Set<String> PROTOCOL_RESERVED = new HashSet<>();
-  static {
-    Collections.addAll(PROTOCOL_RESERVED, "namespace", "protocol", "doc", "messages", "types", "errors");
-  }
+  private static final Set<String> PROTOCOL_RESERVED = Collections
+      .unmodifiableSet(new HashSet<>(Arrays.asList("namespace", "protocol", "doc", "messages", "types", "errors")));
 
   private Protocol() {
     super(PROTOCOL_RESERVED);
@@ -396,15 +392,15 @@ public class Protocol extends JsonProperties {
     return name.hashCode() + namespace.hashCode() + types.hashCode() + messages.hashCode() + propsHashCode();
   }
 
-  /** Render this as <a href="http://json.org/">JSON</a>. */
+  /** Render this as <a href="https://json.org/">JSON</a>. */
   @Override
   public String toString() {
     return toString(false);
   }
 
   /**
-   * Render this as <a href="http://json.org/">JSON</a>.
-   * 
+   * Render this as <a href="https://json.org/">JSON</a>.
+   *
    * @param pretty if true, pretty-print JSON.
    */
   public String toString(boolean pretty) {
@@ -587,7 +583,8 @@ public class Protocol extends JsonProperties {
       JsonNode fieldDocNode = field.get("doc");
       if (fieldDocNode != null)
         fieldDoc = fieldDocNode.textValue();
-      Field newField = new Field(name, Schema.parse(fieldTypeNode, types), fieldDoc, field.get("default"));
+      Field newField = new Field(name, Schema.parse(fieldTypeNode, types), fieldDoc, field.get("default"), true,
+          Order.ASCENDING);
       Set<String> aliases = Schema.parseAliases(field);
       if (aliases != null) { // add aliases
         for (String alias : aliases)

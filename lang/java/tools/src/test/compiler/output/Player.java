@@ -230,6 +230,7 @@ public class Player extends org.apache.avro.specific.SpecificRecordBase implemen
   /**
    * RecordBuilder for Player instances.
    */
+  @org.apache.avro.specific.AvroGenerated
   public static class Builder extends org.apache.avro.specific.SpecificRecordBuilderBase<Player>
     implements org.apache.avro.data.RecordBuilder<Player> {
 
@@ -493,7 +494,7 @@ public class Player extends org.apache.avro.specific.SpecificRecordBase implemen
 
   @Override protected boolean hasCustomCoders() { return true; }
 
-  @Override protected void customEncode(org.apache.avro.io.Encoder out)
+  @Override public void customEncode(org.apache.avro.io.Encoder out)
     throws java.io.IOException
   {
     out.writeInt(this.number);
@@ -517,7 +518,7 @@ public class Player extends org.apache.avro.specific.SpecificRecordBase implemen
 
   }
 
-  @Override protected void customDecode(org.apache.avro.io.ResolvingDecoder in)
+  @Override public void customDecode(org.apache.avro.io.ResolvingDecoder in)
     throws java.io.IOException
   {
     org.apache.avro.Schema.Field[] fieldOrder = in.readFieldOrderIfDiff();

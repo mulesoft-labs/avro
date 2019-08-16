@@ -7,7 +7,7 @@
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -96,7 +96,8 @@ public class TestResolvingIO {
       break;
     }
     Decoder vi = new ResolvingDecoder(wsc, rsc, bvi);
-    TestValidatingIO.check(vi, calls, values, skipLevel);
+    String msg = "Error in resolving case: w=" + wsc + ", r=" + rsc;
+    TestValidatingIO.check(msg, vi, calls, values, skipLevel);
   }
 
   @Parameterized.Parameters

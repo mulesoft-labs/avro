@@ -7,7 +7,7 @@
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -91,10 +91,11 @@ public class SpecificResponder extends GenericResponder {
       method.setAccessible(true);
       return method.invoke(impl, params);
     } catch (InvocationTargetException e) {
-      if (e.getTargetException() instanceof Exception) {
-        throw (Exception) e.getTargetException();
+      Throwable error = e.getTargetException();
+      if (error instanceof Exception) {
+        throw (Exception) error;
       } else {
-        throw new Exception(e.getTargetException());
+        throw new AvroRuntimeException(error);
       }
     } catch (NoSuchMethodException | IllegalAccessException e) {
       throw new AvroRuntimeException(e);

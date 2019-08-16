@@ -7,7 +7,7 @@
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -28,12 +28,13 @@ import org.apache.avro.specific.SpecificData;
 
 import org.junit.Test;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 
 import com.google.protobuf.ByteString;
 
-import org.apache.avro.protobuf.Test.Foo;
-import org.apache.avro.protobuf.Test.A;
-import org.apache.avro.protobuf.Test.M.N;
+import org.apache.avro.protobuf.noopt.Test.Foo;
+import org.apache.avro.protobuf.noopt.Test.A;
+import org.apache.avro.protobuf.noopt.Test.M.N;
 
 public class TestProtobuf {
   @Test
@@ -65,6 +66,9 @@ public class TestProtobuf {
     builder = Foo.newBuilder(fooInArray);
     builder.addFooArray(fooInArray);
 
+    com.google.protobuf.Timestamp ts = com.google.protobuf.Timestamp.newBuilder().setSeconds(1L).setNanos(2).build();
+    builder.setTimestamp(ts);
+
     builder = Foo.newBuilder(fooInner);
     builder.setFoo(fooInner);
     Foo foo = builder.build();
@@ -92,6 +96,31 @@ public class TestProtobuf {
   @Test
   public void testNestedClassNamespace() throws Exception {
     Schema s = ProtobufData.get().getSchema(Foo.class);
-    assertEquals(org.apache.avro.protobuf.Test.class.getName(), s.getNamespace());
+    assertEquals(org.apache.avro.protobuf.noopt.Test.class.getName(), s.getNamespace());
+  }
+
+  @Test
+  public void testClassNamespaceInMultipleFiles() throws Exception {
+    Schema fooSchema = ProtobufData.get().getSchema(org.apache.avro.protobuf.multiplefiles.Foo.class);
+    assertEquals(org.apache.avro.protobuf.multiplefiles.Foo.class.getPackage().getName(), fooSchema.getNamespace());
+
+    Schema nSchema = ProtobufData.get().getSchema(org.apache.avro.protobuf.multiplefiles.M.N.class);
+    assertEquals(org.apache.avro.protobuf.multiplefiles.M.class.getName(), nSchema.getNamespace());
+  }
+
+  @Test
+  public void testGetNonRepeatedSchemaWithLogicalType() throws Exception {
+    ProtoConversions.TimestampMillisConversion conversion = new ProtoConversions.TimestampMillisConversion();
+
+    // Don't convert to logical type if conversion isn't set
+    ProtobufData instance1 = new ProtobufData();
+    Schema s1 = instance1.getSchema(com.google.protobuf.Timestamp.class);
+    assertNotEquals(conversion.getRecommendedSchema(), s1);
+
+    // Convert to logical type if conversion is set
+    ProtobufData instance2 = new ProtobufData();
+    instance2.addLogicalTypeConversion(conversion);
+    Schema s2 = instance2.getSchema(com.google.protobuf.Timestamp.class);
+    assertEquals(conversion.getRecommendedSchema(), s2);
   }
 }

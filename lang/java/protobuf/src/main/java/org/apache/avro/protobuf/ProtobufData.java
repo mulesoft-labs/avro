@@ -7,7 +7,7 @@
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -27,6 +27,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.io.IOException;
 import java.io.File;
 
+import org.apache.avro.Conversion;
 import org.apache.avro.Schema;
 import org.apache.avro.Schema.Field;
 import org.apache.avro.generic.GenericData;
@@ -45,6 +46,7 @@ import com.google.protobuf.Descriptors.EnumValueDescriptor;
 import com.google.protobuf.Descriptors.FileDescriptor;
 import com.google.protobuf.DescriptorProtos.FileOptions;
 
+import org.apache.avro.util.ClassUtils;
 import org.apache.avro.util.internal.Accessor;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -198,6 +200,14 @@ public class ProtobufData extends GenericData {
     if (seen.containsKey(descriptor)) // stop recursion
       return seen.get(descriptor);
     boolean first = seen.isEmpty();
+
+    Conversion conversion = getConversionByDescriptor(descriptor);
+    if (conversion != null) {
+      Schema converted = conversion.getRecommendedSchema();
+      seen.put(descriptor, converted);
+      return converted;
+    }
+
     try {
       Schema result = Schema.createRecord(descriptor.getName(), null,
           getNamespace(descriptor.getFile(), descriptor.getContainingType()), false);
@@ -219,20 +229,28 @@ public class ProtobufData extends GenericData {
   private String getNamespace(FileDescriptor fd, Descriptor containing) {
     FileOptions o = fd.getOptions();
     String p = o.hasJavaPackage() ? o.getJavaPackage() : fd.getPackage();
-    String outer;
-    if (o.hasJavaOuterClassname()) {
-      outer = o.getJavaOuterClassname();
-    } else {
-      outer = new File(fd.getName()).getName();
-      outer = outer.substring(0, outer.lastIndexOf('.'));
-      outer = toCamelCase(outer);
+    String outer = "";
+    if (!o.getJavaMultipleFiles()) {
+      if (o.hasJavaOuterClassname()) {
+        outer = o.getJavaOuterClassname();
+      } else {
+        outer = new File(fd.getName()).getName();
+        outer = outer.substring(0, outer.lastIndexOf('.'));
+        outer = toCamelCase(outer);
+      }
     }
     StringBuilder inner = new StringBuilder();
     while (containing != null) {
-      inner.insert(0, "$" + containing.getName());
+      if (inner.length() == 0) {
+        inner.insert(0, containing.getName());
+      } else {
+        inner.insert(0, containing.getName() + "$");
+      }
       containing = containing.getContainingType();
     }
-    return p + "." + outer + inner;
+    String d1 = (!outer.isEmpty() || inner.length() != 0 ? "." : "");
+    String d2 = (!outer.isEmpty() && inner.length() != 0 ? "$" : "");
+    return p + d1 + outer + d2 + inner;
   }
 
   private static String toCamelCase(String s) {
@@ -359,4 +377,22 @@ public class ProtobufData extends GenericData {
 
   }
 
+  /**
+   * Get Conversion from protobuf descriptor via protobuf classname.
+   *
+   * @param descriptor protobuf descriptor
+   * @return Conversion | null
+   */
+  private Conversion getConversionByDescriptor(Descriptor descriptor) {
+    String namespace = getNamespace(descriptor.getFile(), descriptor.getContainingType());
+    String name = descriptor.getName();
+    String dot = namespace.endsWith("$") ? "" : "."; // back-compatibly handle $
+
+    try {
+      Class clazz = ClassUtils.forName(getClassLoader(), namespace + dot + name);
+      return getConversionByClass(clazz);
+    } catch (ClassNotFoundException e) {
+      return null;
+    }
+  }
 }

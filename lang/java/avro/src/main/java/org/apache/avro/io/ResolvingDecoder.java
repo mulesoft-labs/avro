@@ -7,7 +7,7 @@
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -129,7 +129,7 @@ public class ResolvingDecoder extends ValidatingDecoder {
   }
 
   /**
-   * Same as {@link readFieldOrder} except that it returns <tt>null</tt> if there
+   * Same as {@link #readFieldOrder} except that it returns <tt>null</tt> if there
    * was no reordering of fields, i.e., if the correct thing for the reader to do
    * is to read (all) of its fields in the order specified by its own schema
    * (useful for optimizations).

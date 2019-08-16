@@ -7,7 +7,7 @@
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -27,6 +27,7 @@ public class TestMain {
   public void testToolDescriptionLength() {
     Main m = new Main();
     for (Tool t : m.tools.values()) {
+      // System.out.println(t.getName() + ": " + t.getShortDescription().length());
       if (m.maxLen + 2 + t.getShortDescription().length() > 80) {
         fail("Tool description too long: " + t.getName());
       }

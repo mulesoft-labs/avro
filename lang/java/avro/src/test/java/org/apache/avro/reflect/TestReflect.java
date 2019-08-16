@@ -7,7 +7,7 @@
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -608,6 +608,7 @@ public class TestReflect {
         + "\"org.apache.avro.reflect.TestReflect\",\"fields\":[]}");
   }
 
+  @AvroMeta(key = "X", value = "Y")
   public static class RAvroMeta {
     @AvroMeta(key = "K", value = "V")
     int a;
@@ -615,8 +616,48 @@ public class TestReflect {
 
   @Test
   public void testAnnotationAvroMeta() throws Exception {
-    check(RAvroMeta.class, "{\"type\":\"record\",\"name\":\"RAvroMeta\",\"namespace\":"
-        + "\"org.apache.avro.reflect.TestReflect\",\"fields\":[" + "{\"name\":\"a\",\"type\":\"int\",\"K\":\"V\"}]}");
+    check(RAvroMeta.class,
+        "{\"type\":\"record\",\"name\":\"RAvroMeta\",\"namespace\":"
+            + "\"org.apache.avro.reflect.TestReflect\",\"fields\":[" + "{\"name\":\"a\",\"type\":\"int\",\"K\":\"V\"}]"
+            + ",\"X\":\"Y\"}");
+  }
+
+  @AvroMeta(key = "X", value = "Y")
+  @AvroMeta(key = "A", value = "B")
+  public static class RAvroMultiMeta {
+    @AvroMeta(key = "K", value = "V")
+    @AvroMeta(key = "L", value = "W")
+    int a;
+  }
+
+  @Test
+  public void testAnnotationMultiAvroMeta() {
+    check(RAvroMultiMeta.class,
+        "{\"type\":\"record\",\"name\":\"RAvroMultiMeta\",\"namespace\":"
+            + "\"org.apache.avro.reflect.TestReflect\",\"fields\":["
+            + "{\"name\":\"a\",\"type\":\"int\",\"K\":\"V\",\"L\":\"W\"}]" + ",\"X\":\"Y\",\"A\":\"B\"}");
+  }
+
+  public static class RAvroDuplicateFieldMeta {
+    @AvroMeta(key = "K", value = "V")
+    @AvroMeta(key = "K", value = "W")
+    int a;
+  }
+
+  @Test(expected = AvroTypeException.class)
+  public void testAnnotationDuplicateFieldAvroMeta() {
+    ReflectData.get().getSchema(RAvroDuplicateFieldMeta.class);
+  }
+
+  @AvroMeta(key = "K", value = "V")
+  @AvroMeta(key = "K", value = "W")
+  public static class RAvroDuplicateTypeMeta {
+    int a;
+  }
+
+  @Test(expected = AvroTypeException.class)
+  public void testAnnotationDuplicateTypeAvroMeta() {
+    ReflectData.get().getSchema(RAvroDuplicateTypeMeta.class);
   }
 
   public static class RAvroName {
@@ -1151,6 +1192,19 @@ public class TestReflect {
         "{\"type\":\"record\",\"name\":\"AliasC\",\"namespace\":\"org.apache.avro.reflect.TestReflect\",\"fields\":[],\"aliases\":[\"a\"]}");
   }
 
+  @AvroAlias(alias = "alias1", space = "space1")
+  @AvroAlias(alias = "alias2", space = "space2")
+  private static class MultipleAliasRecord {
+
+  }
+
+  @Test
+  public void testMultipleAliasAnnotationsOnClass() {
+    check(MultipleAliasRecord.class,
+        "{\"type\":\"record\",\"name\":\"MultipleAliasRecord\",\"namespace\":\"org.apache.avro.reflect.TestReflect\",\"fields\":[],\"aliases\":[\"space1.alias1\",\"space2.alias2\"]}");
+
+  }
+
   private static class Z {
   }
 
@@ -1165,6 +1219,12 @@ public class TestReflect {
 
   private static class ClassWithAliasOnField {
     @AvroAlias(alias = "aliasName")
+    int primitiveField;
+  }
+
+  private static class ClassWithMultipleAliasesOnField {
+    @AvroAlias(alias = "alias1")
+    @AvroAlias(alias = "alias2")
     int primitiveField;
   }
 
@@ -1186,6 +1246,16 @@ public class TestReflect {
   @Test(expected = AvroRuntimeException.class)
   public void namespaceDefinitionOnFieldAliasMustThrowException() {
     ReflectData.get().getSchema(ClassWithAliasAndNamespaceOnField.class);
+  }
+
+  @Test
+  public void testMultipleFieldAliases() {
+
+    Schema expectedSchema = SchemaBuilder.record(ClassWithMultipleAliasesOnField.class.getSimpleName())
+        .namespace("org.apache.avro.reflect.TestReflect").fields().name("primitiveField").aliases("alias1", "alias2")
+        .type(Schema.create(org.apache.avro.Schema.Type.INT)).noDefault().endRecord();
+
+    check(ClassWithMultipleAliasesOnField.class, expectedSchema.toString());
   }
 
   private static class DefaultTest {

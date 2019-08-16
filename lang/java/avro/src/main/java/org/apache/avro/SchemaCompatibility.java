@@ -7,7 +7,7 @@
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -52,7 +52,7 @@ public class SchemaCompatibility {
   /**
    * Validates that the provided reader schema can be used to decode avro data
    * written with the provided writer schema.
-   * 
+   *
    * @param reader schema to check.
    * @param writer schema to check.
    * @return a result object identifying any compatibility errors.
@@ -94,12 +94,11 @@ public class SchemaCompatibility {
    * @return whether the names of the named schemas match or not.
    */
   public static boolean schemaNameEquals(final Schema reader, final Schema writer) {
-    final String writerFullName = writer.getFullName();
-    if (objectsEqual(reader.getFullName(), writerFullName)) {
+    if (objectsEqual(reader.getName(), writer.getName())) {
       return true;
     }
     // Apply reader aliases:
-    return reader.getAliases().contains(writerFullName);
+    return reader.getAliases().contains(writer.getFullName());
   }
 
   /**
@@ -216,7 +215,7 @@ public class SchemaCompatibility {
      * <p>
      * Memoizes the compatibility results.
      * </p>
-     * 
+     *
      * @param referenceToken The equivalent JSON pointer reference token
      *                       representation of the schema node being visited.
      * @param reader         Reader schema to test.
@@ -402,7 +401,7 @@ public class SchemaCompatibility {
           // Reader field does not correspond to any field in the writer record schema, so
           // the
           // reader field must have a default value.
-          if (readerField.defaultValue() == null) {
+          if (!readerField.hasDefaultValue()) {
             // reader field has no default value. Check for the enum default value
             if (readerField.schema().getType() == Type.ENUM && readerField.schema().getEnumDefault() != null) {
               result = result
@@ -543,7 +542,7 @@ public class SchemaCompatibility {
 
     /**
      * Returns a details object representing a compatible schema pair.
-     * 
+     *
      * @return a SchemaCompatibilityDetails object with COMPATIBLE
      *         SchemaCompatibilityType, and no other state.
      */
@@ -554,7 +553,7 @@ public class SchemaCompatibility {
     /**
      * Returns a details object representing a state indicating that recursion is in
      * progress.
-     * 
+     *
      * @return a SchemaCompatibilityDetails object with RECURSION_IN_PROGRESS
      *         SchemaCompatibilityType, and no other state.
      */
@@ -565,7 +564,7 @@ public class SchemaCompatibility {
     /**
      * Returns a details object representing an incompatible schema pair, including
      * error details.
-     * 
+     *
      * @return a SchemaCompatibilityDetails object with INCOMPATIBLE
      *         SchemaCompatibilityType, and state representing the violating part.
      */
@@ -579,7 +578,7 @@ public class SchemaCompatibility {
 
     /**
      * Returns the SchemaCompatibilityType, always non-null.
-     * 
+     *
      * @return a SchemaCompatibilityType instance, always non-null
      */
     public SchemaCompatibilityType getCompatibility() {
@@ -589,7 +588,7 @@ public class SchemaCompatibility {
     /**
      * If the compatibility is INCOMPATIBLE, returns {@link Incompatibility
      * Incompatibilities} found, otherwise an empty list.
-     * 
+     *
      * @return a list of {@link Incompatibility Incompatibilities}, may be empty,
      *         never null.
      */
@@ -653,7 +652,7 @@ public class SchemaCompatibility {
 
     /**
      * Returns the SchemaIncompatibilityType.
-     * 
+     *
      * @return a SchemaIncompatibilityType instance.
      */
     public SchemaIncompatibilityType getType() {
@@ -662,7 +661,7 @@ public class SchemaCompatibility {
 
     /**
      * Returns the fragment of the reader schema that failed compatibility check.
-     * 
+     *
      * @return a Schema instance (fragment of the reader schema).
      */
     public Schema getReaderFragment() {
@@ -671,7 +670,7 @@ public class SchemaCompatibility {
 
     /**
      * Returns the fragment of the writer schema that failed compatibility check.
-     * 
+     *
      * @return a Schema instance (fragment of the writer schema).
      */
     public Schema getWriterFragment() {
@@ -681,7 +680,7 @@ public class SchemaCompatibility {
     /**
      * Returns a human-readable message with more details about what failed. Syntax
      * depends on the SchemaIncompatibilityType.
-     * 
+     *
      * @see #getType()
      * @return a String with details about the incompatibility.
      */
@@ -694,7 +693,7 @@ public class SchemaCompatibility {
      * <a href="https://tools.ietf.org/html/draft-ietf-appsawg-json-pointer-08">JSON
      * Pointer</a> describing the node location within the schema's JSON document
      * tree where the incompatibility was encountered.
-     * 
+     *
      * @return JSON Pointer encoded as a string.
      */
     public String getLocation() {
@@ -800,7 +799,7 @@ public class SchemaCompatibility {
 
     /**
      * Constructs a new instance.
-     * 
+     *
      * @param result      The result of the compatibility check.
      * @param reader      schema that was validated.
      * @param writer      schema that was validated.
@@ -815,7 +814,7 @@ public class SchemaCompatibility {
 
     /**
      * Gets the type of this result.
-     * 
+     *
      * @return the type of this result.
      */
     public SchemaCompatibilityType getType() {
@@ -825,7 +824,7 @@ public class SchemaCompatibility {
     /**
      * Gets more details about the compatibility, in particular if getType() is
      * INCOMPATIBLE.
-     * 
+     *
      * @return the details of this compatibility check.
      */
     public SchemaCompatibilityResult getResult() {

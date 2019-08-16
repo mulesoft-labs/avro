@@ -7,7 +7,7 @@
 # "License"); you may not use this file except in compliance
 # with the License.  You may obtain a copy of the License at
 #
-# http://www.apache.org/licenses/LICENSE-2.0
+# https://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -88,6 +88,14 @@ class TestLogicalTypes < Test::Unit::TestCase
     assert_equal 1432849613221843, type.encode(Time.utc(2015, 5, 28, 21, 46, 53, 221843))
     assert_equal 1432849613221843, type.encode(DateTime.new(2015, 5, 28, 21, 46, 53.221843))
     assert_equal Time.utc(2015, 5, 28, 21, 46, 53, 221843), type.decode(1432849613221843)
+  end
+
+  def test_parse_fixed_duration
+    schema = Avro::Schema.parse <<-SCHEMA
+      { "type": "fixed", "size": 12, "name": "fixed_dur", "logicalType": "duration" }
+    SCHEMA
+
+    assert_equal 'duration', schema.logical_type
   end
 
   def encode(datum, schema)

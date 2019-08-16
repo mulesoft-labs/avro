@@ -7,13 +7,16 @@
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
+ * The section demarcated by 'copied from Apache commons-codec' is
+ * from Apache Commons Codec v1.9.
  */
 package org.apache.avro.tool;
 
@@ -252,8 +255,8 @@ class Util {
   }
 
   static OptionSpec<Integer> compressionLevelOption(OptionParser optParser) {
-    return optParser.accepts("level", "Compression level (only applies to deflate and xz)").withRequiredArg()
-        .ofType(Integer.class).defaultsTo(Deflater.DEFAULT_COMPRESSION);
+    return optParser.accepts("level", "Compression level (only applies to deflate, xz, and zstandard)")
+        .withRequiredArg().ofType(Integer.class).defaultsTo(Deflater.DEFAULT_COMPRESSION);
   }
 
   static CodecFactory codecFactory(OptionSet opts, OptionSpec<String> codec, OptionSpec<Integer> level) {
@@ -267,8 +270,40 @@ class Util {
       return CodecFactory.deflateCodec(level.value(opts));
     } else if (codecName.equals(DataFileConstants.XZ_CODEC)) {
       return CodecFactory.xzCodec(level.value(opts));
+    } else if (codecName.equals(DataFileConstants.ZSTANDARD_CODEC)) {
+      return CodecFactory.zstandardCodec(level.value(opts));
     } else {
       return CodecFactory.fromString(codec.value(opts));
     }
   }
+
+  // Below copied from Apache commons-codec version 1.9
+  // org.apache.commons.codec.binary.Hex, see NOTICE.
+  /**
+   * Used to build output as Hex
+   */
+  private static final char[] DIGITS_LOWER = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd',
+      'e', 'f' };
+
+  /**
+   * Converts an array of bytes into an array of characters representing the
+   * hexadecimal values of each byte in order. The returned array will be double
+   * the length of the passed array, as it takes two characters to represent any
+   * given byte.
+   *
+   * @param data     a byte[] to convert to Hex characters
+   * @param toDigits the output alphabet
+   * @return A char[] containing hexadecimal characters
+   */
+  static String encodeHex(final byte[] data) {
+    final int l = data.length;
+    final char[] out = new char[l << 1];
+    // two characters form the hex value.
+    for (int i = 0, j = 0; i < l; i++) {
+      out[j++] = DIGITS_LOWER[(0xF0 & data[i]) >>> 4];
+      out[j++] = DIGITS_LOWER[0x0F & data[i]];
+    }
+    return new String(out);
+  }
+  // end copied from Apache commons-codec
 }

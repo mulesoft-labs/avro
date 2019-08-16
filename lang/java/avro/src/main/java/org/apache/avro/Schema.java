@@ -7,7 +7,7 @@
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -24,9 +24,12 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.DoubleNode;
+import com.fasterxml.jackson.databind.node.NullNode;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Serializable;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -81,7 +84,27 @@ import org.apache.avro.util.internal.JacksonUtils;
  * property.
  * </ul>
  */
-public abstract class Schema extends JsonProperties {
+public abstract class Schema extends JsonProperties implements Serializable {
+
+  private static final long serialVersionUID = 1L;
+
+  protected Object writeReplace() {
+    SerializableSchema ss = new SerializableSchema();
+    ss.schemaString = toString();
+    return ss;
+  }
+
+  private static final class SerializableSchema implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
+    private String schemaString;
+
+    private Object readResolve() {
+      return new Schema.Parser().parse(schemaString);
+    }
+  }
+
   static final JsonFactory FACTORY = new JsonFactory();
   static final ObjectMapper MAPPER = new ObjectMapper(FACTORY);
 
@@ -168,7 +191,16 @@ public abstract class Schema extends JsonProperties {
     this.logicalType = logicalType;
   }
 
-  /** Create an anonymous record schema. */
+  /**
+   * Create an anonymous record schema.
+   *
+   * @deprecated This method allows to create Schema objects that cannot be parsed
+   *             by {@link Schema.Parser#parse(String)}. It will be removed in a
+   *             future version of Avro. Better use
+   *             i{@link #createRecord(String, String, String, boolean, List)} to
+   *             produce a fully qualified Schema.
+   */
+  @Deprecated
   public static Schema createRecord(List<Field> fields) {
     Schema result = createRecord(null, null, null, false);
     result.setFields(fields);
@@ -215,7 +247,7 @@ public abstract class Schema extends JsonProperties {
     return createUnion(new LockableArrayList<>(types));
   }
 
-  /** Create a union schema. */
+  /** Create a fixed schema. */
   public static Schema createFixed(String name, String doc, String space, int size) {
     return new FixedSchema(new Name(name, space), doc, size);
   }
@@ -344,15 +376,15 @@ public abstract class Schema extends JsonProperties {
     throw new AvroRuntimeException("Not fixed: " + this);
   }
 
-  /** Render this as <a href="http://json.org/">JSON</a>. */
+  /** Render this as <a href="https://json.org/">JSON</a>. */
   @Override
   public String toString() {
     return toString(false);
   }
 
   /**
-   * Render this as <a href="http://json.org/">JSON</a>.
-   * 
+   * Render this as <a href="https://json.org/">JSON</a>.
+   *
    * @param pretty if true, pretty-print JSON.
    */
   public String toString(boolean pretty) {
@@ -411,10 +443,8 @@ public abstract class Schema extends JsonProperties {
     return (hashCode == other.hashCode) || (hashCode == NO_HASHCODE) || (other.hashCode == NO_HASHCODE);
   }
 
-  private static final Set<String> FIELD_RESERVED = new HashSet<>();
-  static {
-    Collections.addAll(FIELD_RESERVED, "default", "doc", "name", "order", "type", "aliases");
-  }
+  private static final Set<String> FIELD_RESERVED = Collections
+      .unmodifiableSet(new HashSet<>(Arrays.asList("default", "doc", "name", "order", "type", "aliases")));
 
   /** Returns true if this record is an union type. */
   public boolean isUnion() {
@@ -448,7 +478,7 @@ public abstract class Schema extends JsonProperties {
 
         @Override
         protected Field createField(String name, Schema schema, String doc, JsonNode defaultValue) {
-          return new Field(name, schema, doc, defaultValue);
+          return new Field(name, schema, doc, defaultValue, true, Order.ASCENDING);
         }
 
         @Override
@@ -469,6 +499,12 @@ public abstract class Schema extends JsonProperties {
       }
     };
 
+    /**
+     * For Schema unions with a "null" type as the first entry, this can be used to
+     * specify that the default for the union is null.
+     */
+    public static final Object NULL_DEFAULT_VALUE = new Object();
+
     private final String name; // name of the field.
     private int position = -1;
     private final Schema schema;
@@ -477,21 +513,13 @@ public abstract class Schema extends JsonProperties {
     private final Order order;
     private Set<String> aliases;
 
-    Field(String name, Schema schema, String doc, JsonNode defaultValue) {
-      this(name, schema, doc, defaultValue, true, Order.ASCENDING);
-    }
-
-    Field(String name, Schema schema, String doc, JsonNode defaultValue, Order order) {
-      this(name, schema, doc, defaultValue, true, order);
-    }
-
     Field(String name, Schema schema, String doc, JsonNode defaultValue, boolean validateDefault, Order order) {
       super(FIELD_RESERVED);
       this.name = validateName(name);
       this.schema = schema;
       this.doc = doc;
       this.defaultValue = validateDefault ? validateDefault(name, schema, defaultValue) : defaultValue;
-      this.order = order;
+      this.order = Objects.requireNonNull(order, "Order cannot be null");
     }
 
     /**
@@ -501,10 +529,24 @@ public abstract class Schema extends JsonProperties {
      * {@code aliases}.
      */
     public Field(Field field, Schema schema) {
-      this(field.name, schema, field.doc, field.defaultValue, field.order);
+      this(field.name, schema, field.doc, field.defaultValue, true, field.order);
       putAll(field);
       if (field.aliases != null)
         aliases = new LinkedHashSet<>(field.aliases);
+    }
+
+    /**
+     *
+     */
+    public Field(String name, Schema schema) {
+      this(name, schema, (String) null, (JsonNode) null, true, Order.ASCENDING);
+    }
+
+    /**
+     *
+     */
+    public Field(String name, Schema schema, String doc) {
+      this(name, schema, doc, (JsonNode) null, true, Order.ASCENDING);
     }
 
     /**
@@ -512,7 +554,9 @@ public abstract class Schema extends JsonProperties {
      *                     mapping in {@link JsonProperties}
      */
     public Field(String name, Schema schema, String doc, Object defaultValue) {
-      this(name, schema, doc, defaultValue, Order.ASCENDING);
+      this(name, schema, doc,
+          defaultValue == NULL_DEFAULT_VALUE ? NullNode.getInstance() : JacksonUtils.toJsonNode(defaultValue), true,
+          Order.ASCENDING);
     }
 
     /**
@@ -520,7 +564,9 @@ public abstract class Schema extends JsonProperties {
      *                     mapping in {@link JsonProperties}
      */
     public Field(String name, Schema schema, String doc, Object defaultValue, Order order) {
-      this(name, schema, doc, JacksonUtils.toJsonNode(defaultValue), order);
+      this(name, schema, doc,
+          defaultValue == NULL_DEFAULT_VALUE ? NullNode.getInstance() : JacksonUtils.toJsonNode(defaultValue), true,
+          Objects.requireNonNull(order));
     }
 
     public String name() {
@@ -540,6 +586,15 @@ public abstract class Schema extends JsonProperties {
     /** Field's documentation within the record, if set. May return null. */
     public String doc() {
       return doc;
+    }
+
+    /**
+     * @return true if this Field has a default value set. Can be used to determine
+     *         if a "null" return from defaultVal() is due to that being the default
+     *         value or just not set.
+     */
+    public boolean hasDefaultValue() {
+      return defaultValue != null;
     }
 
     JsonNode defaultValue() {
@@ -754,16 +809,19 @@ public abstract class Schema extends JsonProperties {
 
   }
 
-  private static class SeenPair {
+  /**
+   * Useful as key of {@link Map}s when traversing two schemas at the same time
+   * and need to watch for recursion.
+   */
+  public static class SeenPair {
     private Object s1;
     private Object s2;
 
-    private SeenPair(Object s1, Object s2) {
+    public SeenPair(Object s1, Object s2) {
       this.s1 = s1;
       this.s2 = s2;
     }
 
-    @Override
     public boolean equals(Object o) {
       if (!(o instanceof SeenPair))
         return false;
@@ -858,7 +916,7 @@ public abstract class Schema extends JsonProperties {
       boolean first = seen.isEmpty();
       try {
         seen.add(here);
-        return fields.equals(((RecordSchema) o).fields);
+        return Objects.equals(fields, that.fields);
       } finally {
         if (first)
           seen.clear();
@@ -913,7 +971,7 @@ public abstract class Schema extends JsonProperties {
         f.schema().toJson(names, gen);
         if (f.doc() != null)
           gen.writeStringField("doc", f.doc());
-        if (f.defaultValue() != null) {
+        if (f.hasDefaultValue()) {
           gen.writeFieldName("default");
           gen.writeTree(f.defaultValue());
         }
@@ -1347,7 +1405,7 @@ public abstract class Schema extends JsonProperties {
   /**
    * Constructs a Schema object from JSON schema file <tt>file</tt>. The contents
    * of <tt>file</tt> is expected to be in UTF-8 format.
-   * 
+   *
    * @param file The file to read the schema from.
    * @return The freshly built Schema.
    * @throws IOException if there was trouble reading the contents or they are
@@ -1362,7 +1420,7 @@ public abstract class Schema extends JsonProperties {
   /**
    * Constructs a Schema object from JSON schema stream <tt>in</tt>. The contents
    * of <tt>in</tt> is expected to be in UTF-8 format.
-   * 
+   *
    * @param in The input stream to read the schema from.
    * @return The freshly built Schema.
    * @throws IOException if there was trouble reading the contents or they are
@@ -1375,8 +1433,8 @@ public abstract class Schema extends JsonProperties {
   }
 
   /**
-   * Construct a schema from <a href="http://json.org/">JSON</a> text.
-   * 
+   * Construct a schema from <a href="https://json.org/">JSON</a> text.
+   *
    * @deprecated use {@link Schema.Parser} instead.
    */
   @Deprecated
@@ -1385,8 +1443,8 @@ public abstract class Schema extends JsonProperties {
   }
 
   /**
-   * Construct a schema from <a href="http://json.org/">JSON</a> text.
-   * 
+   * Construct a schema from <a href="https://json.org/">JSON</a> text.
+   *
    * @param validate true if names should be validated, false if not.
    * @deprecated use {@link Schema.Parser} instead.
    */
@@ -1586,7 +1644,7 @@ public abstract class Schema extends JsonProperties {
               && (Type.FLOAT.equals(fieldSchema.getType()) || Type.DOUBLE.equals(fieldSchema.getType()))
               && defaultValue.isTextual())
             defaultValue = new DoubleNode(Double.valueOf(defaultValue.textValue()));
-          Field f = new Field(fieldName, fieldSchema, fieldDoc, defaultValue, order);
+          Field f = new Field(fieldName, fieldSchema, fieldDoc, defaultValue, true, order);
           Iterator<String> i = field.fieldNames();
           while (i.hasNext()) { // add field props
             String prop = i.next();
@@ -1759,7 +1817,7 @@ public abstract class Schema extends JsonProperties {
       for (Field f : s.getFields()) {
         Schema fSchema = applyAliases(f.schema, seen, aliases, fieldAliases);
         String fName = getFieldAlias(name, f.name, fieldAliases);
-        Field newF = new Field(fName, fSchema, f.doc, f.defaultValue, f.order);
+        Field newF = new Field(fName, fSchema, f.doc, f.defaultValue, true, f.order);
         newF.putAll(f); // copy props
         newFields.add(newF);
       }
@@ -1849,7 +1907,7 @@ public abstract class Schema extends JsonProperties {
   /**
    * No change is permitted on LockableArrayList once lock() has been called on
    * it.
-   * 
+   *
    * @param <E>
    */
 

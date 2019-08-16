@@ -7,7 +7,7 @@
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -59,7 +59,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 /**
  * Utilities for generic Java data. See {@link GenericRecordBuilder} for a
  * convenient way to build {@link GenericRecord} instances.
- * 
+ *
  * @see GenericRecordBuilder
  */
 public class GenericData {
@@ -182,7 +182,7 @@ public class GenericData {
    * Default implementation of {@link GenericRecord}. Note that this
    * implementation does not fill in default values for fields if they are not
    * specified; use {@link GenericRecordBuilder} in that case.
-   * 
+   *
    * @see GenericRecordBuilder
    */
   public static class Record implements GenericRecord, Comparable<Record> {
@@ -594,7 +594,7 @@ public class GenericData {
     }
   }
 
-  /** Renders a Java datum as <a href="http://www.json.org/">JSON</a>. */
+  /** Renders a Java datum as <a href="https://www.json.org/">JSON</a>. */
   public String toString(Object datum) {
     StringBuilder buffer = new StringBuilder();
     toString(datum, buffer, new IdentityHashMap<>(128));
@@ -603,7 +603,7 @@ public class GenericData {
 
   private static final String TOSTRING_CIRCULAR_REFERENCE_ERROR_TEXT = " \">>> CIRCULAR REFERENCE CANNOT BE PUT IN JSON STRING, ABORTING RECURSION <<<\" ";
 
-  /** Renders a Java datum as <a href="http://www.json.org/">JSON</a>. */
+  /** Renders a Java datum as <a href="https://www.json.org/">JSON</a>. */
   protected void toString(Object datum, StringBuilder buffer, IdentityHashMap<Object, Object> seenObjects) {
     if (isRecord(datum)) {
       if (seenObjects.containsKey(datum)) {
@@ -665,10 +665,10 @@ public class GenericData {
       writeEscapedString(datum.toString(), buffer);
       buffer.append("\"");
     } else if (isBytes(datum)) {
-      buffer.append("{\"bytes\": \"");
+      buffer.append("\"");
       ByteBuffer bytes = ((ByteBuffer) datum).duplicate();
       writeEscapedString(StandardCharsets.ISO_8859_1.decode(bytes), buffer);
-      buffer.append("\"}");
+      buffer.append("\"");
     } else if (((datum instanceof Float) && // quote Nan & Infinity
         (((Float) datum).isInfinite() || ((Float) datum).isNaN()))
         || ((datum instanceof Double) && (((Double) datum).isInfinite() || ((Double) datum).isNaN()))) {
@@ -688,7 +688,7 @@ public class GenericData {
     }
   }
 
-  /* Adapted from http://code.google.com/p/json-simple */
+  /* Adapted from https://code.google.com/p/json-simple */
   private void writeEscapedString(CharSequence string, StringBuilder builder) {
     for (int i = 0; i < string.length(); i++) {
       char ch = string.charAt(i);
@@ -715,7 +715,7 @@ public class GenericData {
         builder.append("\\t");
         break;
       default:
-        // Reference: http://www.unicode.org/versions/Unicode5.1.0/
+        // Reference: https://www.unicode.org/versions/Unicode5.1.0/
         if ((ch >= '\u0000' && ch <= '\u001F') || (ch >= '\u007F' && ch <= '\u009F')
             || (ch >= '\u2000' && ch <= '\u20FF')) {
           String hex = Integer.toHexString(ch);
@@ -1139,7 +1139,7 @@ public class GenericData {
 
   /**
    * Gets the default value of the given field, if any.
-   * 
+   *
    * @param field the field whose default value should be retrieved.
    * @return the default value associated with the given field, or null if none is
    *         specified in the schema.
@@ -1185,7 +1185,7 @@ public class GenericData {
    * Makes a deep copy of a value given its schema.
    * <P>
    * Logical types are converted to raw types, copied, then converted back.
-   * 
+   *
    * @param schema the schema of the value to deep copy.
    * @param value  the value to deep copy.
    * @return a deep copy of the given value.

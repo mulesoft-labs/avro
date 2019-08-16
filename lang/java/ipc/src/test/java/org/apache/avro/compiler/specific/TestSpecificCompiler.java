@@ -7,7 +7,7 @@
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -118,7 +118,7 @@ public class TestSpecificCompiler {
 
     assertTrue(protocol.contains("java.lang.CharSequence goto$(java.lang.CharSequence break$)"));
     assertTrue(protocol.contains("public interface default$"));
-    assertTrue(protocol.contains("throws org.apache.avro.AvroRemoteException, finally$"));
+    assertTrue(protocol.contains(" finally$"));
 
     assertCompilesWithJavaCompiler(new File(INPUT_DIR.getRoot(), name.getMethodName()), outputs);
 

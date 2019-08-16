@@ -7,7 +7,7 @@
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -25,7 +25,6 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Type;
 import java.util.Arrays;
 
-import org.apache.avro.AvroRemoteException;
 import org.apache.avro.Protocol;
 import org.apache.avro.Schema;
 import org.apache.avro.AvroRuntimeException;
@@ -121,8 +120,8 @@ public class SpecificRequestor extends Requestor implements InvocationHandler {
           throw e;
         }
 
-        // Not an expected Exception, so wrap it in AvroRemoteException:
-        throw new AvroRemoteException(e);
+        // Not an expected Exception, so wrap it in AvroRuntimeException:
+        throw new AvroRuntimeException(e);
       }
     }
   }

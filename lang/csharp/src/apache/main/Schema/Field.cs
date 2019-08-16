@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -7,7 +7,7 @@
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,7 +17,6 @@
  */
 using System;
 using System.Collections.Generic;
-using System.Text;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json;
 
@@ -34,8 +33,19 @@ namespace Avro
         /// </summary>
         public enum SortOrder
         {
+            /// <summary>
+            /// Ascending order.
+            /// </summary>
             ascending,
+
+            /// <summary>
+            /// Descending order.
+            /// </summary>
             descending,
+
+            /// <summary>
+            /// Ignore sort order.
+            /// </summary>
             ignore
         }
 
@@ -102,6 +112,7 @@ namespace Avro
         /// <param name="doc">documentation for the field</param>
         /// <param name="defaultValue">field's default value if it exists</param>
         /// <param name="sortorder">sort order of the field</param>
+        /// <param name="props">dictionary that provides access to custom properties</param>
         internal Field(Schema schema, string name, IList<string> aliases, int pos, string doc,
                         JToken defaultValue, SortOrder sortorder, PropertyMap props)
         {
@@ -167,13 +178,13 @@ namespace Avro
                 return null;
 
             if (jaliases.Type != JTokenType.Array)
-                throw new SchemaParseException("Aliases must be of format JSON array of strings");
+                throw new SchemaParseException($"Aliases must be of format JSON array of strings at '{jtok.Path}'");
 
             var aliases = new List<string>();
             foreach (JToken jalias in jaliases)
             {
                 if (jalias.Type != JTokenType.String)
-                    throw new SchemaParseException("Aliases must be of format JSON array of strings");
+                    throw new SchemaParseException($"Aliases must be of format JSON array of strings at '{jtok.Path}'");
 
                 aliases.Add((string)jalias);
             }

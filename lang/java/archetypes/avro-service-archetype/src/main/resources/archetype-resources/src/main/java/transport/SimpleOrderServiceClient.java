@@ -10,7 +10,7 @@
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -24,7 +24,6 @@ package ${package}.transport;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 
-import org.apache.avro.AvroRemoteException;
 import org.apache.avro.ipc.Transceiver;
 import org.apache.avro.ipc.netty.NettyTransceiver;
 import org.apache.avro.ipc.specific.SpecificRequestor;
@@ -72,7 +71,7 @@ public class SimpleOrderServiceClient implements OrderProcessingService {
   }
 
   @Override
-  public Confirmation submitOrder(Order order) throws AvroRemoteException, OrderFailure {
+  public Confirmation submitOrder(Order order) throws OrderFailure {
     return service.submitOrder(order);
   }
 

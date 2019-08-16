@@ -7,7 +7,7 @@
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -41,7 +41,6 @@ import java.util.Map;
 import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.apache.avro.AvroRemoteException;
 import org.apache.avro.AvroRuntimeException;
 import org.apache.avro.AvroTypeException;
 import org.apache.avro.Conversion;
@@ -630,9 +629,13 @@ public class ReflectData extends SpecificData {
               String fieldName = (annotatedName != null) ? annotatedName.value() : field.getName();
               Schema.Field recordField = new Schema.Field(fieldName, fieldSchema, doc, defaultValue);
 
-              AvroMeta meta = field.getAnnotation(AvroMeta.class); // add metadata
-              if (meta != null)
+              AvroMeta[] metadata = field.getAnnotationsByType(AvroMeta.class); // add metadata
+              for (AvroMeta meta : metadata) {
+                if (recordField.getObjectProps().containsKey(meta.key())) {
+                  throw new AvroTypeException("Duplicate field prop key: " + meta.key());
+                }
                 recordField.addProp(meta.key(), meta.value());
+              }
               for (Schema.Field f : fields) {
                 if (f.name().equals(fieldName))
                   throw new AvroTypeException("double field entry: " + fieldName);
@@ -645,9 +648,13 @@ public class ReflectData extends SpecificData {
           if (error) // add Throwable message
             fields.add(new Schema.Field("detailMessage", THROWABLE_MESSAGE, null, null));
           schema.setFields(fields);
-          AvroMeta meta = c.getAnnotation(AvroMeta.class);
-          if (meta != null)
+          AvroMeta[] metadata = c.getAnnotationsByType(AvroMeta.class);
+          for (AvroMeta meta : metadata) {
+            if (schema.getObjectProps().containsKey(meta.key())) {
+              throw new AvroTypeException("Duplicate type prop key: " + meta.key());
+            }
             schema.addProp(meta.key(), meta.value());
+          }
         }
         names.put(fullName, schema);
       }
@@ -821,8 +828,7 @@ public class ReflectData extends SpecificData {
     List<Schema> errs = new ArrayList<>();
     errs.add(Protocol.SYSTEM_ERROR); // every method can throw
     for (Type err : method.getGenericExceptionTypes())
-      if (err != AvroRemoteException.class)
-        errs.add(getSchema(err, names));
+      errs.add(getSchema(err, names));
     Schema errors = Schema.createUnion(errs);
     return protocol.createMessage(method.getName(), null /* doc */, new LinkedHashMap<String, String>() /* propMap */,
         request, response, errors);
@@ -869,8 +875,8 @@ public class ReflectData extends SpecificData {
   }
 
   private void consumeAvroAliasAnnotation(Class<?> c, Schema schema) {
-    AvroAlias alias = c.getAnnotation(AvroAlias.class);
-    if (alias != null) {
+    AvroAlias[] aliases = c.getAnnotationsByType(AvroAlias.class);
+    for (AvroAlias alias : aliases) {
       String space = alias.space();
       if (AvroAlias.NULL.equals(space))
         space = null;
@@ -879,8 +885,8 @@ public class ReflectData extends SpecificData {
   }
 
   private void consumeFieldAlias(Field field, Schema.Field recordField) {
-    AvroAlias alias = field.getAnnotation(AvroAlias.class);
-    if (alias != null) {
+    AvroAlias[] aliases = field.getAnnotationsByType(AvroAlias.class);
+    for (AvroAlias alias : aliases) {
       if (!alias.space().equals(AvroAlias.NULL)) {
         throw new AvroRuntimeException(
             "Namespaces are not allowed on field aliases. " + "Offending field: " + recordField.name());

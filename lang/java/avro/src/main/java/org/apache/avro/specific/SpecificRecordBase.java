@@ -7,7 +7,7 @@
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -27,6 +27,8 @@ import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.io.ResolvingDecoder;
 import org.apache.avro.io.Encoder;
+import org.apache.avro.message.MessageDecoder;
+import org.apache.avro.message.MessageEncoder;
 
 /** Base class for generated record classes. */
 public abstract class SpecificRecordBase
@@ -103,20 +105,21 @@ public abstract class SpecificRecordBase
   }
 
   /**
-   * Returns true iff an instance supports the {@link #encode} and {@link #decode}
-   * operations. Should only be used by <code>SpecificDatumReader/Writer</code> to
-   * selectively use {@link #customEncode} and {@link #customDecode} to optimize
-   * the (de)serialization of values.
+   * Returns true iff an instance supports the {@link MessageEncoder#encode} and
+   * {@link MessageDecoder#decode} operations. Should only be used by
+   * <code>SpecificDatumReader/Writer</code> to selectively use
+   * {@link #customEncode} and {@link #customDecode} to optimize the
+   * (de)serialization of values.
    */
   protected boolean hasCustomCoders() {
     return false;
   }
 
-  protected void customEncode(Encoder out) throws IOException {
+  public void customEncode(Encoder out) throws IOException {
     throw new UnsupportedOperationException();
   }
 
-  protected void customDecode(ResolvingDecoder in) throws IOException {
+  public void customDecode(ResolvingDecoder in) throws IOException {
     throw new UnsupportedOperationException();
   }
 }
