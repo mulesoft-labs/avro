@@ -23,7 +23,7 @@
   <parent>
     <artifactId>avro-parent</artifactId>
     <groupId>org.apache.avro</groupId>
-   <version>1.10.0-MULE_2</version>
+   <version>1.10.0-MULE_3</version>
     <relativePath>../</relativePath>
   </parent>
 
@@ -37,7 +37,7 @@
     <jmh.version>1.21</jmh.version>
     <main.basedir>${project.parent.parent.basedir}</main.basedir>
   </properties>
-  
+
   <dependencies>
     <dependency>
       <groupId>org.apache.avro</groupId>
